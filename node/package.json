@@ -1,0 +1,28 @@
+{
+  "name": "<%NAME%>",
+  "version": "0.0.1",
+  "description": "<%DESCRIPTION%>",
+  "keywords": [],
+  "homepage": "https://github.com/chbrown/<%NAME%>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/chbrown/<%NAME%>.git"
+  },
+  "bugs": {
+    "email": "Christopher Brown <io@henrian.com>",
+    "url": "http://github.com/chbrown/<%NAME%>/issues"
+  },
+  "license": "MIT",
+  "author": "Christopher Brown <io@henrian.com> (http://henrian.com)",
+  "dependencies": {
+    "async": "*",
+    "optimist": "*",
+    "underscore": "*"
+  },
+  "devDependencies": {
+  },
+  "bin": {
+  },
+  "scripts": {
+  }
+}
