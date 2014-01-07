@@ -11,7 +11,9 @@ npm install <%NAME%>
 **Or github:**
 
 ```sh
-npm install <%NAME%>
+git clone https://github.com/chbrown/<%NAME%>.git
+cd <%NAME%>
+npm install -g
 ```
 
 **Import:**
