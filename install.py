@@ -1,45 +1,57 @@
 #!/usr/bin/env python
 import os
 import re
-import sys
 import argparse
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 here = os.path.dirname(__file__) or os.curdir
-os.chdir(here)
+
+
+def mkdir_p(dirpath):
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+
+def walk(root):
+    # yield lists of filepaths that are as relative as `root` is.
+    # does not yield directories. thus, empty directories will be totally ignored.
+    for dirpath, _, filenames in os.walk(root):
+        for filename in filenames:
+            yield os.path.join(dirpath, filename)
 
 
 def find_variables(project):
-    for dirpath, dirnames, filenames in os.walk(project):
-        for filename in filenames:
-            filepath = os.path.join(dirpath, filename)
-            text = open(filepath).read()
-            for variable in re.findall(r'<%(\w+)%>', text):
-                yield variable
+    for filepath in walk(project):
+        text = open(filepath).read()
+        for variable in re.findall(r'<%(\w+)%>', text):
+            yield variable
 
 
-def interpolate(source_fd, target_fd, variables):
+def interpolate(string, variables):
     def repl(match):
         return variables.get(match.group(1), '')
 
-    source = source_fd.read()
-    target_fd.write(re.sub(r'<%(\w+)%>', repl, source))
+    return re.sub(r'<%(\w+)%>', repl, string)
 
 
 def copy_interpolate(project, destination, variables):
-    for dirpath, dirnames, filenames in os.walk(project):
-        for filename in filenames:
-            source = os.path.join(dirpath, filename)
-            target = os.path.join(destination, filename)
-            target_directory = os.path.dirname(target)
-            if not os.path.exists(target_directory):
-                os.mkdir(target_directory)
-            if os.path.exists(target):
-                print >> sys.stderr, '%s exists; not overwriting' % target
-            else:
-                with open(source) as source_fd:
-                    with open(target, 'w') as target_fd:
-                        interpolate(source_fd, target_fd, variables)
-                print >> sys.stderr, target
+    for source_filename in walk(project):
+        target_filename = interpolate(source_filename, variables)
+        target_filepath = os.path.join(destination, target_filename)
+        target_directory = os.path.dirname(target_filepath)
+        # make sure we can write to where target_filepath needs to be
+        mkdir_p(target_directory)
+        # ignore if it already exists
+        if os.path.exists(target_filepath):
+            logger.debug('%s exists; not overwriting', target_filepath)
+        else:
+            source_contents = open(source_filename, 'rb').read()
+            target_contents = interpolate(source_contents, variables)
+            open(target_filepath, 'wb').write(target_contents)
+            logger.info('%s -> %s', source_filename, target_filepath)
 
 
 def main():
@@ -51,9 +63,16 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('project', choices=projects, help='Type of project')
     parser.add_argument('destination', help='Directory to install to')
+    parser.add_argument('--verbose', action='store_true', help='Log extra information')
     opts, _ = parser.parse_known_args()
 
-    variables = set(find_variables(opts.project))
+    level = logging.DEBUG if opts.verbose else logging.INFO
+    logging.basicConfig(level=level)
+
+    os.chdir(os.path.join(here, opts.project))
+    logger.info('current working directory: %s', os.getcwd())
+
+    variables = set(find_variables('.'))
 
     for variable in variables:
         default = os.getenv(variable)
@@ -68,31 +87,9 @@ def main():
 
     # last key wins conflicts in the dict constructor
     values = dict(os.environ.items() + vars(opts).items())
-    copy_interpolate(opts.project, opts.destination, values)
-    print >> sys.stderr, 'Done'
+    copy_interpolate('.', opts.destination, values)
+    logger.debug('Done')
 
 
 if __name__ == '__main__':
     main()
-
-# pattern = opts.pattern
-
-# if not sys.stdin.isatty():
-#     reader = sys.stdin
-# else:
-#     reader = (line for path in opts.files for line in open(path))
-
-# if opts.last:
-#     cache = []
-#     for line in reader:
-#         cache.append(line)
-#         if pattern in line:
-#             cache = []
-#     print ''.join(cache),
-# else:
-#     found = False
-#     for line in reader:
-#         if found:
-#             print line,
-#         if pattern in line:
-#             found = True
