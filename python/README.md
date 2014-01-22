@@ -12,7 +12,7 @@ python setup.py develop
 
 **Import:**
 
-```js
+```python
 import <%NAME%>
 ```
 
