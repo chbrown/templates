@@ -13,6 +13,7 @@ here = os.path.dirname(__file__) or os.curdir
 def mkdir_p(dirpath):
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
+    return dirpath
 
 
 def walk(root):
