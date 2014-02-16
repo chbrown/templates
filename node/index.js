@@ -1,4 +1,4 @@
-'use strict'; /*jslint node: true, es5: true, indent: 2 */
+/*jslint node: true */
 var async = require('async');
 var optimist = require('optimist');
 var underscore = require('underscore');
